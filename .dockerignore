@@ -1,0 +1,15 @@
+# 构建镜像时忽略这些，减小体积、加快构建
+.venv
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+.idea
+.pytest_cache
+.ruff_cache
+.langgraph_api
+agent.egg-info
+tests
+.github
+.DS_Store

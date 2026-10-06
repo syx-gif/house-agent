@@ -1,0 +1,76 @@
+# LangGraph 自托管部署：redis + postgres + mysql(房源) + langgraph-api
+# 用法见 README.md
+volumes:
+  langgraph-data:
+  mysql-data:
+
+services:
+  # 1) Redis：任务队列 / 流式推送
+  langgraph-redis:
+    image: redis:6
+    container_name: langgraph-redis
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 1s
+      retries: 5
+
+  # 2) PostgreSQL：存 agent 的状态/检查点（LangGraph 自己用，与房源无关）
+  langgraph-postgres:
+    image: postgres:16
+    container_name: langgraph-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - langgraph-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      start_period: 10s
+      timeout: 1s
+      retries: 5
+      interval: 5s
+
+  # 3) 房源 MySQL：你的 agent 通过 get_conn() 连这个库查房源
+  #    DB_HOST 在 .env 里设为 "mysql"（即本服务名），密码用 .env 的 DB_PASSWORD
+  mysql:
+    image: mysql:8
+    container_name: house-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+
+  # 4) LangGraph API：你的 agent（house_agent 等都在 langgraph.json 里）
+  #    镜像名 IMAGE_NAME 由 `langgraph build -t <名字>` 生成（见 README）
+  langgraph-api:
+    image: ${IMAGE_NAME}
+    container_name: langgraph-api
+    ports:
+      - "8123:8000"
+    depends_on:
+      langgraph-redis:
+        condition: service_healthy
+      langgraph-postgres:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # 以下三项从 .env 注入，但显式写在这里覆盖/确保存在
+      REDIS_URI: redis://langgraph-redis:6379
+      POSTGRES_URI: postgres://postgres:${POSTGRES_PASSWORD}@langgraph-postgres:5432/postgres?sslmode=disable
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
