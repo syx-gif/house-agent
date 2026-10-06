@@ -22,7 +22,7 @@ REMOTE_PORT="${3:-8080}"
 
 if [ -z "${SERVER_ADDR}" ] || [ -z "${TOKEN}" ]; then
     echo "用法: sudo bash setup-frpc.sh <VPS公网IP> <token> [对外端口,默认8080]"
-    echo "示例: sudo bash setup-frpc.sh 123.207.240.212 a1b2c3d4e5f6 8080"
+    echo "示例: sudo bash setup-frpc.sh <VPS公网IP> <与frps一致的token> 8080"
     exit 1
 fi
 

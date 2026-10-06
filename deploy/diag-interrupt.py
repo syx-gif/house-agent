@@ -1,10 +1,15 @@
 """诊断：复现「推荐 -> 中断 -> 回复'不需要' -> 是否卡死」
 
 直接调 langgraph-api 的 REST 接口，绕过前端，判断问题出在后端图逻辑还是前端展示。
-用法（Windows Git Bash）：
-    "C:/Users/言锡/.workbuddy/binaries/python/versions/3.13.12/python.exe" deploy/diag-interrupt.py
+用法：
+    python deploy/diag-interrupt.py [服务地址]
+
+例：
+    python deploy/diag-interrupt.py http://127.0.0.1:8080
+    python deploy/diag-interrupt.py https://你的域名
 """
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -12,7 +17,10 @@ import urllib.request
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-BASE = "http://123.207.240.212:8080"
+# 服务地址：优先取命令行第一个参数，其次环境变量 HOUSE_AGENT_URL。
+# 注意：不要把真实服务器地址硬编码进文件 —— 仓库一旦公开就会暴露你的服务器。
+BASE = (sys.argv[1] if len(sys.argv) > 1
+        else os.environ.get("HOUSE_AGENT_URL", "http://127.0.0.1:8080"))
 ASSISTANT = "house_agent"
 
 
