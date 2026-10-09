@@ -205,6 +205,45 @@ http://<VPS公网IP>:8080/
 
 两个服务都是 `systemctl enable` 过的，**开机自启**。
 
+### 关机会怎样？（分享给别人前必须知道）
+
+网站能不能访问，取决于链路上**每一环都活着**：
+
+```
+朋友的浏览器 → 腾讯云 VPS 的 frps → 隧道 → 你 Windows 上的虚拟机 → 5 个容器
+```
+
+| 你关掉了什么 | 别人看到的现象 | 原因 |
+|---|---|---|
+| 腾讯云 VPS（关机 / 到期） | **一直转圈，最后超时** | 入口没了，"门牌号"都连不上 |
+| 本地 VMware 虚拟机 | **页面报 502 Bad Gateway** | VPS 还在，frps 收到请求但隧道那头没人接 |
+| Windows 关机 / 睡眠 | **同样是 502** | 虚拟机跑在 Windows 里，宿主机睡了它也跟着停 |
+| 对方自己断网 | 打不开 | 与你的服务无关 |
+
+> **一秒判故障**：**超时 = VPS 侧挂了；502 = 本地虚拟机或容器挂了。** 两者修法完全不同。
+
+**想让网站尽量一直在线：**
+
+1. Windows 关掉自动睡眠：设置 → 系统 → 电源 → 屏幕和睡眠 → 睡眠选「从不」
+2. 虚拟机保持**开机**，不要「挂起」（挂起后容器虽在，网络会断）
+3. VPS 不用管，它只会按时扣费
+4. 恢复后在**虚拟机**上自检：
+
+```bash
+cd ~/project/huose_agent/my_langgraph_app
+sudo docker compose ps             # 5 个都该是 Up
+sudo systemctl is-active frpc      # 期望 active
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost/    # 期望 200
+```
+
+5. 再从**外面**验一次（在 Windows 上）：
+
+```bash
+curl -s -o /dev/null -w "公网: HTTP %{http_code}\n" --max-time 15 http://<VPS公网IP>:8080/ok
+```
+
+`200` = 好了 ｜ `502` = 本地没起来 ｜ `000` = VPS 或防火墙问题
+
 ---
 
 ## 三条安全铁律

@@ -1,0 +1,9 @@
+# 强制 shell 脚本保持 LF 行尾。
+# 否则 Windows 上的 Git 会把 .sh 转成 CRLF，传到 Linux 虚拟机后
+# shebang 行末尾多一个 \r，报 "bad interpreter: /bin/bash^M"。
+*.sh        text eol=lf
+*.py        text eol=lf
+Makefile    text eol=lf
+*.toml      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf

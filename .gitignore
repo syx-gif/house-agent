@@ -166,3 +166,8 @@ cython_debug/
 .ruff_cache/
 
 .langgraph_api/
+
+# nginx HTTP Basic 认证的密码文件（内含密码哈希，绝不提交）
+# 由 `htpasswd -cbm nginx/.htpasswd <用户名> <密码>` 生成
+nginx/.htpasswd
+.htpasswd

@@ -1,9 +1,9 @@
 [project]
-name = "agent"
-version = "0.0.1"
-description = "Starter template for making a new agent LangGraph."
+name = "house-agent"
+version = "0.1.0"
+description = "基于 LangGraph 的租房推荐 Agent：意图识别、房源推荐、预约与查询的多轮对话系统。"
 authors = [
-    { name = "William Fu-Hinthorn", email = "13333726+hinthornw@users.noreply.github.com" },
+    { name = "言锡", email = "syx1001102@gmail.com" },
 ]
 readme = "README.md"
 license = { text = "MIT" }

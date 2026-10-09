@@ -52,8 +52,9 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
     ports:
       # 只绑定到 127.0.0.1：虚拟机上仍可用 mysql 客户端连，但外部（含公网穿透/端口映射）连不进来。
-      # ⚠️ 千万别写成 "3306:3306"（等价 0.0.0.0:3306），那等于把 root/123456 直接挂在公网上，
+      # ⚠️ 千万别写成 "3306:3306"（等价 0.0.0.0:3306），那等于把数据库 root 账号直接挂在公网上，
       #    会被扫描器在几分钟内攻破（挖矿/勒索）。Redis 6379、Postgres 5432 同理，一律不要对外映射。
+      #    数据库密码请用强口令并在 .env 的 DB_PASSWORD 中设置，不要用弱口令。
       - "127.0.0.1:3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
@@ -111,5 +112,7 @@ services:
     volumes:
       - ./static:/usr/share/nginx/html:ro          # 把项目 static 目录挂进去当网页根目录
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # HTTP Basic 访问口令文件（本机用 htpasswd 生成后放这里，已被 .gitignore 忽略）
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
       - langgraph-api
